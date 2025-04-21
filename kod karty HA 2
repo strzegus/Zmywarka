@@ -1,0 +1,24 @@
+type: entities
+entities:
+  - entity: switch.gniazdko_zmywarka_socket_1
+  - entity: number.zmywarka_wyswietlacz_jasno_led
+  - entity: switch.zmywarka_wyswietlacz_pod_wietlenie_wy_wietlacza
+  - entity: sensor.gniazdko_zmywarka_moc
+  - entity: sensor.gniazdko_zmywarka_napiecie
+  - entity: sensor.gniazdko_zmywarka_natezenie_pradu
+  - entity: sensor.gniazdko_zmywarka_zuzycie
+  - entity: binary_sensor.zmywarka_wyswietlacz_zmywarka_aktywna
+  - entity: sensor.zmywarka_wyswietlacz_rodzaj_mycia
+  - entity: sensor.zmywarka_wyswietlacz_rozpocz_cie_zmywarki_esp
+    name: Rozpoczęcie
+  - entity: sensor.zmywarka_wyswietlacz_zako_czenie_zmywarki_esp
+    name: Zakończenie
+  - entity: sensor.zmywarka_zuzycie_dzienne
+  - entity: sensor.zmywarka_zuzycie_miesieczne
+  - entity: sensor.zmywarka_wyswietlacz_czas_mycia
+  - entity: sensor.zmywarka_wyswietlacz_zmywarka_start
+  - entity: sensor.zmywarka_wyswietlacz_zmywarka_stop
+  - entity: sensor.zmywarka_wyswietlacz_aktualny_czas_hh_mm_ss
+  - entity: sensor.zmywarka_wyswietlacz_zmywarka_czas_aktualny
+title: Zmywarka
+show_header_toggle: false
