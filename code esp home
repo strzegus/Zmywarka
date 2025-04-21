@@ -1,0 +1,384 @@
+esphome:
+  name: zmywarka-wyswietlacz
+  friendly_name: Zmywarka Wyświetlacz
+  platformio_options:
+    build_flags: "-DBOARD_HAS_PSRAM"
+    board_build.arduino.memory_type: qio_opi
+#  on_boot:
+#    then:
+#      - switch.turn_on: PodswietlenieZmywarka
+
+
+
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: arduino
+    version: latest
+  flash_size: 16MB
+ 
+
+preferences:
+  flash_write_interval: 10min
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "cLv0Fb7Hy+96CZhCHucJltKfcMjhMBdK7NBqPKH0kRs="
+
+ota:
+  - platform: esphome
+    password: "09d7cff468bb3c9e501fbfb4726005c1"
+
+wifi:
+  ssid: Lucyfer_IoT_2.4
+  password: przemek1
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Zmywarka Wyswietlacz Hotspot"
+    password: "FQS6CMWNHl51"
+    
+web_server:
+  port: 80
+  js_include: "./v3/www.js"
+  js_url: ""
+  version: 2
+  auth:
+    username: strzegustech
+    password: admin
+
+globals:
+  - id: current_duration_seconds
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'  
+  - id: ostatnie_rozpoczecie
+    type: std::string
+    restore_value: yes
+    initial_value: "\"\""
+
+  - id: ostatnie_zakonczenie
+    type: std::string
+    restore_value: yes
+    initial_value: "\"\""
+
+  - id: zmywarka_start_time
+    type: uint32_t
+    restore_value: yes
+    initial_value: '0'
+
+  - id: zmywarka_stop_time
+    type: uint32_t
+    restore_value: yes
+    initial_value: '0'
+
+  - id: zmywarka_duration
+    type: uint32_t
+    restore_value: yes
+    initial_value: '0'
+
+  - id: zmywarka_start_save
+    type: uint32_t
+    restore_value: yes
+    initial_value: '0'
+
+  - id: zmywarka_stop_save
+    type: uint32_t
+    restore_value: yes
+    initial_value: '0'
+
+
+captive_portal:
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+spi:
+  clk_pin: GPIO14
+  mosi_pin: GPIO13
+ 
+
+font:
+  - file: "arial.ttf"
+    id: font1
+    size: 30
+  - file: "arial.ttf"
+    id: font2
+    size: 24
+  - file: "arial.ttf"
+    id: font3
+    size: 18
+
+color:
+  - id: kolor_aktywny
+    red: 1.0   # 100% czerwony
+    green: 1.0 # 100% zielony
+    blue: 0.0  # 0% niebieski
+    white: 0.2 # 20% biały
+
+  - id: kolor_zakonczony
+    red: 0.0  # 56% czerwony
+    green: 0.7 # 93% zielony
+    blue: 0.3 # 56% niebieski
+    white: 0.2  # 20% biały
+
+display:
+  - platform: ili9xxx
+    model: ST7789V  
+    invert_colors: true
+    color_palette: 8BIT 
+    color_order: bgr
+    cs_pin: GPIO10
+    dc_pin: GPIO11
+    reset_pin: GPIO12
+    rotation: 90
+    lambda: |-
+      it.fill(id(zmywarka_aktywna).state ? id(kolor_aktywny) : id(kolor_zakonczony));
+
+      if (id(zmywarka_aktywna).state) {
+        it.printf(10, 20, id(font1), Color::BLACK, "        ZMYWARKA");
+        it.printf(10, 70, id(font2), Color::BLACK, "       W trakcie pracy!");
+        it.printf(10, 100, id(font2), Color::BLACK, "      Trwa cykl mycia...");
+        it.printf(10, 130, id(font3), Color::BLACK, "Rozpoczeto: %s", id(ZmywarkaStart).state.c_str());
+        it.printf(10, 160, id(font3), Color::BLACK, "Czas Trwania: %s", id(zmywarka_czas_aktualny).state.c_str());
+        it.printf(10, 190, id(font3), Color::BLACK, "Zuzycie Dzienne: %.2f kWh", id(zuzyciedzienne).state);
+        it.printf(10, 210, id(font3), Color::BLACK, "Zuzycie Miesieczne: %.2f kWh", id(zuzyciemiesieczne).state);
+        
+
+      } else {
+        it.printf(10, 30, id(font1), Color::WHITE, "        ZMYWARKA");
+        it.printf(10, 60, id(font2), Color::WHITE, "      Zakonczenie mycie!");
+        it.printf(10, 90, id(font2), Color::WHITE, "Program: %s", id(rodzaj_mycia).state.c_str());
+        it.printf(10, 110, id(font2), Color::WHITE, "Wyjmij naczynia.");
+        it.printf(10, 140, id(font3), Color::WHITE, "Zakonczono: %s", id(ZmywarkaStop).state.c_str());
+        it.printf(10, 160, id(font3), Color::WHITE, "Czas trwania: %s", id(zmywarka_czas_mycia).state.c_str());
+        it.printf(10, 190, id(font3), Color::BLACK, "Zuzycie Dzienne: %.2f kWh", id(zuzyciedzienne).state);
+        it.printf(10, 210, id(font3), Color::BLACK, "Zuzycie Miesieczne: %.2f kWh", id(zuzyciemiesieczne).state);
+        it.printf(10, 230, id(font3), Color::BLACK, "Czas: %s", id(zmywarka_czas_aktualny).state.c_str());
+
+      }
+time:
+  - platform: homeassistant
+    id: esp_time
+
+sensor:
+  - platform: homeassistant
+    id: zuzyciedzienne
+    entity_id: sensor.zmywarka_zuzycie_dzienne
+
+  - platform: homeassistant
+    id: zuzyciemiesieczne
+    entity_id: sensor.zmywarka_zuzycie_miesieczne
+
+  - platform: homeassistant
+    id: zmywarka_moc
+    entity_id: sensor.gniazdko_zmywarka_moc
+
+
+
+binary_sensor:
+  - platform: template
+    name: "Zmywarka Aktywna"
+    id: zmywarka_aktywna
+    lambda: |-
+      return (id(zmywarka_moc).state > 5.0);
+    filters:
+      - delayed_on: 60s    # aktywacja po 1 min powyżej 5W
+      - delayed_off: 120s  # dezaktywacja po 2 min poniżej 5W
+    on_press:
+      then:
+        - lambda: |-
+            id(current_duration_seconds) = 0;
+            id(zmywarka_czas_aktualny).publish_state("00:00:00");
+        - lambda: |-
+            id(zmywarka_start_time) = millis();
+            id(zmywarka_start_save) = id(zmywarka_start_time);
+
+            auto t = id(esp_time).now();
+            if (t.is_valid()) {
+             id(ZmywarkaStart).publish_state(t.strftime("%H:%M").c_str());
+            } else {
+             id(ZmywarkaStart).publish_state("Brak czasu");
+            }
+        - lambda: |-
+            auto t = id(esp_time).now();
+            if (t.is_valid()) {
+              id(ostatnie_rozpoczecie) = t.strftime("%H:%M");
+            } else {
+              id(ostatnie_rozpoczecie) = "Brak czasu";
+            }
+
+            // Czyścimy zakończenie
+            id(ostatnie_zakonczenie).clear();
+        - light.turn_on:
+            id: podswietlenie_zmywarka
+            brightness: 20%  # lub: brightness: 0.2            
+        - script.stop: wylacz_podswietlenie_po_60_min
+
+    on_release:
+      then:
+        - lambda: |-
+            uint32_t minuty = id(current_duration_seconds) / 60;
+            id(zmywarka_duration) = minuty;
+
+            // Formatowanie czasu trwania
+            uint32_t godziny = minuty / 60;
+            uint32_t tylko_minuty = minuty % 60;
+
+            char czas_bufor[16];
+            snprintf(czas_bufor, sizeof(czas_bufor), "%02d:%02d", godziny, tylko_minuty);
+            id(zmywarka_czas_mycia).publish_state(czas_bufor);
+
+            // Określenie rodzaju mycia na podstawie czasu
+            std::string typ;
+
+            if (minuty >= 200 && minuty < 240) {
+              typ = "Eko mycie";
+            } else if (minuty >= 130 && minuty < 200) {
+              typ = "Zwykłe mycie";
+            } else if (minuty >= 90 && minuty < 130) {
+              typ = "Delikatne mycie";
+            } else if (minuty >= 30 && minuty < 90) {
+              typ = "Szybkie mycie";
+            } else if (minuty > 5 && minuty < 30) {
+              typ = "Płukanie";
+            } else {
+              typ = "Nieznany cykl";
+            }
+            id(rodzaj_mycia).publish_state(typ);
+
+            // Zapis końca mycia
+            time_t now_stop = id(esp_time).now().timestamp;
+            char buffer_stop[32];
+            strftime(buffer_stop, sizeof(buffer_stop), "%H:%M", localtime(&now_stop));
+            id(ZmywarkaStop).publish_state(buffer_stop);
+        - lambda: |-
+            time_t teraz = id(esp_time).now().timestamp;
+            char bufor[16];
+            strftime(bufor, sizeof(bufor), "%H:%M", localtime(&teraz));
+            id(ostatnie_zakonczenie) = std::string(bufor);
+        - script.execute: wylacz_podswietlenie_po_60_min 
+
+text_sensor:
+  - platform: template
+    name: "Zmywarka Czas Aktualny"
+    id: zmywarka_czas_aktualny
+  - platform: template
+    id: rozpoczecie_zmywarki
+    name: "Ostatnie rozpoczęcie mycia"
+    icon: mdi:dishwasher
+    update_interval: never
+
+  - platform: template
+    id: zakonczenie_zmywarki
+    name: "Ostatnie zakończenie mycia"
+    icon: mdi:dishwasher-off
+    update_interval: never
+  - platform: template
+    name: "Aktualny Czas HH:MM:SS"
+    id: aktualnyczas
+    lambda: |-
+      char buffer[9];
+      auto czas = id(esp_time).now();
+      snprintf(buffer, sizeof(buffer), "%H:%M", czas.hour, czas.minute, czas.second);
+      return {buffer};
+    update_interval: 1s
+    icon: mdi:clock-outline
+  - platform: template
+    name: "Czas Mycia"
+    id: zmywarka_czas_mycia
+  - platform: template
+    name: "Rodzaj Mycia"
+    id: rodzaj_mycia
+
+  - platform: template
+    name: "Zmywarka Start"
+    id: ZmywarkaStart
+
+  - platform: template
+    name: "Zmywarka Stop"
+    id: ZmywarkaStop
+
+  - platform: template
+    name: "Rozpoczęcie Zmywarki (ESP)"
+    id: RZESP
+    lambda: |-
+      return {id(ostatnie_rozpoczecie)};  // Zwracamy std::string poprawnie
+    update_interval: 1s
+
+  - platform: template
+    name: "Zakończenie Zmywarki (ESP)"
+    id: ZZESP
+    lambda: |-
+      return {id(ostatnie_zakonczenie)};  // Poprawna konwersja na string
+    update_interval: 1s
+
+# Definiowanie pinu podświetlenia
+output:
+  - platform: ledc
+    id: backlight_pin
+    pin: GPIO9
+    frequency: 1000 Hz
+    inverted: false  # Możesz ustawić na 'true', jeśli Twój wyświetlacz wymaga odwrotnego sygnału
+
+# Dodanie przełącznika do włączania/wyłączania podświetlenia
+switch:
+  - platform: output
+    name: "Podświetlenie Wyświetlacza"
+    id: PodswietlenieZmywarka
+    output: backlight_pin
+
+light:
+  - platform: monochromatic
+    name: "Podświetlenie Zmywarka"
+    id: podswietlenie_zmywarka
+    output: backlight_pin
+
+number:
+  - platform: template
+    name: "Jasność LED"
+    id: jasnosc_led
+    optimistic: True
+    min_value: 0
+    max_value: 100
+    step: 20
+    initial_value: 25
+    unit_of_measurement: "%"
+
+    # Zmieniaj wartość wyjścia PWM w zależności od suwaka
+    on_value:
+      then:
+        - output.set_level:
+            id: backlight_pin
+            level: !lambda 'return x / 100.0;'  # Skaluje wartość suwaka na zakres 0-1 dla PWM
+
+script:
+  - id: wylacz_podswietlenie_po_60_min
+    mode: restart  # restartuje timer jeśli zostanie uruchomiony ponownie
+    then:
+      - delay: 60min
+      - light.turn_off:
+          id: podswietlenie_zmywarka
+
+interval:
+  - interval: 1s
+    then:
+      - lambda: |-
+          if (id(zmywarka_aktywna).state) {
+            id(current_duration_seconds) += 1;
+
+            uint32_t total_sec = id(current_duration_seconds);
+            uint32_t godziny = total_sec / 3600;
+            uint32_t minuty = (total_sec % 3600) / 60;
+            uint32_t sekundy = total_sec % 60;
+
+            char bufor[16];
+            snprintf(bufor, sizeof(bufor), "%02d:%02d:%02d", godziny, minuty, sekundy);
+            id(zmywarka_czas_aktualny).publish_state(bufor);
+          }
