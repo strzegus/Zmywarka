@@ -28,20 +28,20 @@ logger:
 # Enable Home Assistant API
 api:
   encryption:
-    key: "cLv0Fb7Hy+96CZhCHucJltKfcMjhMBdK7NBqPKH0kRs="
+    key: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 ota:
   - platform: esphome
-    password: "09d7cff468bb3c9e501fbfb4726005c1"
+    password: "xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 wifi:
-  ssid: Lucyfer_IoT_2.4
-  password: przemek1
+  ssid: xxxxxxxxxxxxxxxx
+  password: xxxxxxxxxxxxx
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "Zmywarka Wyswietlacz Hotspot"
-    password: "FQS6CMWNHl51"
+    password: "xxxxxxxxxxxxxx"
     
 web_server:
   port: 80
@@ -49,8 +49,8 @@ web_server:
   js_url: ""
   version: 2
   auth:
-    username: strzegustech
-    password: admin
+    username: xxxxxxxxxxxxx
+    password: xxxxxxxxxxx
 
 globals:
   - id: current_duration_seconds
