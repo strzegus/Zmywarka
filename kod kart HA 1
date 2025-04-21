@@ -1,0 +1,25 @@
+type: markdown
+content: |-
+  {% if is_state('binary_sensor.zmywarka_aktywna', 'on') %}
+    ## 🏠 Zmywarka w trakcie pracy!  
+    ⏳ Trwa cykl mycia naczyń...  
+    - 🕒 **Rozpoczęto:** {{ states('sensor.zmywarka_wyswietlacz_rozpocz_cie_zmywarki_esp') }}
+    - 🕒 **Czas Trwania:** {{
+  states('sensor.zmywarka_wyswietlacz_zmywarka_czas_aktualny') }}  
+  {% else %}
+    ## ✅ Zmywarka zakończyła mycie!  
+    🔔 Wyjmij naczynia.
+    - ✅ **Zakończono:** {{ states('sensor.zmywarka_wyswietlacz_zako_czenie_zmywarki_esp') }}
+    - 💧 **Tryb mycia:** {{ states('sensor.zmywarka_wyswietlacz_rodzaj_mycia') }}
+    - 🕒 **Czas Trwania:** {{
+  states('sensor.zmywarka_wyswietlacz_zmywarka_czas_aktualny') }}
+  {% endif %}
+card_mod:
+  style: |
+    ha-card {
+      background-color: {% if is_state('binary_sensor.zmywarka_aktywna', 'on') %} #ffcc00 {% else %} #4caf50 {% endif %};
+      color: {% if is_state('binary_sensor.zmywarka_aktywna', 'on') %} black {% else %} white {% endif %};
+      font-size: 18px;
+      padding: 10px;
+      border-radius: 10px;
+    }
